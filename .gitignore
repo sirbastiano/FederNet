@@ -3,9 +3,6 @@
 /Doc
 /Pesi
 /Tirocinio_data
-/__pycache__
 /notebook_scaricati
 /MASKRCNN
-/utility/__pycache__
-/Match/__pycache__
-/KalmanFilter/__pycache__
+**/__pycache__
