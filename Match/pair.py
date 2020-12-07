@@ -31,10 +31,11 @@ def matching(crat_det, crat_cat):
         if elem[2] < 100:
             match = [elem[0], elem[1]]
             flag = np.vstack((flag, match))
-    
+
     if flag.shape != (2,):
         flag = flag[1:, :]
-    else: return None
+    else:
+        return None
     flag = np.array(flag).astype(int)
     # flag = remove_mutliple_items(flag)
     return flag
@@ -95,7 +96,7 @@ def crater_catalogued(current_pos):
         np.array([Lat - sp, Lat + sp]),
         np.array([Lon - sp, Lon + sp]),
     )
-    filepath = "DATA/lunar_crater_database_robbins_2018.csv"
+    filepath = "/home/sirbastiano/Desktop/Python Projects/Progetto Tesi/DATA/lunar_crater_database_robbins_2018.csv"
     DB = pd.read_csv(filepath, sep=",")
     df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
     crater_catalogued_onboard = craters_to_relative_frame(df, lon_bounds, lat_bounds)
@@ -112,7 +113,7 @@ def crater_match(current_pos, craters_detected):
         np.array([Lat - sp, Lat + sp]),
         np.array([Lon - sp, Lon + sp]),
     )
-    filepath = "DATA/lunar_crater_database_robbins_2018.csv"
+    filepath = "/home/sirbastiano/Desktop/Python Projects/Progetto Tesi/DATA/lunar_crater_database_robbins_2018.csv"
     DB = pd.read_csv(filepath, sep=",")
     df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
 
@@ -128,7 +129,8 @@ def crater_match(current_pos, craters_detected):
             FEATURE = np.vstack([FEATURE, [x_f, y_f, z_f]])
         FEATURE = FEATURE[1:, :]
         return FEATURE, indexes
-    else: return None
+    else:
+        return None
 
 
 def plt_craters(craters_detected, craters_catalogued, indexes):
@@ -198,10 +200,158 @@ def position_estimation(pos, craters_detected, craters_catalogued, indexes):
     return np.hstack([Z_m, tmp])
 
 
+def sort_mat(mat: np.array):
+    mat_df = pd.DataFrame(mat, columns=["X", "Y", "R"])
+    mat_sort_x = mat_df.sort_values(by=["X"]).copy()
+    mat_sort_x.insert(3, "i", range(len(mat_sort_x)))
+    mat_sort_xy = mat_sort_x.sort_values(by=["Y"])
+    mat_sort_xy.insert(4, "j", range(len(mat_sort_xy)))
+    return mat_sort_xy.sort_index()
+
+
+def find_triplet(df, idx: int):
+    # INPUT: df sorted ij, index
+    # OUTPUT: triplet
+    def ij_picks(pick, df, n):
+        i = pick.i
+        j = pick.j
+        for k in range(n):
+            if k == 0:
+                PICKS = df[
+                    (df.j == j - k)
+                    | (df.j == j + k)
+                    | (df.i == i + k)
+                    | (df.i == i - k)
+                ]
+            else:
+                tmp = df[
+                    (df.j == j - k)
+                    | (df.j == j + k)
+                    | (df.i == i + k)
+                    | (df.i == i - k)
+                ]
+                PICKS = pd.concat([PICKS, tmp])
+        return PICKS
+
+    pick1 = df.iloc[idx]
+    deg2km = 2 * np.pi * 1737.1 / 360
+
+    PICKS = ij_picks(pick1, df, 25)
+
+    ind = 0
+    HP = np.zeros(2)  # Hypothesis
+    for pick in PICKS.iloc:
+        pick2 = pick
+        dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
+        if dist_12 * deg2km > pick2.r + pick1.r:
+            hp = np.hstack([ind, dist_12])
+            HP = np.vstack([HP, hp])
+        ind += 1
+
+    if HP.shape[0] > 4:
+        HP = HP[1:, :].copy()  # Remove first zeros
+        HP.view("f8,f8").sort(order=["f1"], axis=0)  # Order by Eu Distance
+        crater1 = pick1
+        crater2 = PICKS.iloc[int(HP[0, 0])]
+        crater3 = PICKS.iloc[int(HP[1, 0])]
+        return [crater1, crater2, crater3]
+    else:
+        return None
+
+
+def compute_K_vet(triplet):
+    a, b, c = compute_sides(triplet)
+    A, B, C = findAngles(a, b, c)
+    K_vet = np.array([A, B, C])
+    if K_vet is not None:
+        return K_vet
+
+
+def compute_sides(triplet):
+    a = np.linalg.norm(triplet[0][0:2] - triplet[1][0:2])
+    b = np.linalg.norm(triplet[1][0:2] - triplet[2][0:2])
+    c = np.linalg.norm(triplet[2][0:2] - triplet[0][0:2])
+    return a, b, c
+
+
+def find_triplets(df):
+    N, triplet_list = len(df), []
+    for idx in range(N):
+        # 1st:
+        if idx == 0:
+            c1, c2, c3 = find_triplet(df, 0)
+            if np.all([c1, c2, c3]) != None:  # If they exist
+                entry = set([c1.name, c2.name, c3.name])
+                triplet_list.append(entry)
+        # 2nd to end:
+        else:
+            c1, c2, c3 = find_triplet(df, idx)
+            if np.all([c1, c2, c3]) != None:  # If they exist
+                entry = set(
+                    [c1.name, c2.name, c3.name]
+                )  # Note: set() make order meaningless
+                if entry not in triplet_list:
+                    triplet_list.append(entry)
+        printProgressBar(idx, N, prefix="Progress:", suffix="Complete", length=50)
+
+    return triplet_list
+
+
+def picktrip(TRI, idx):
+    triplet, IDs = TRI[idx], []
+
+    for index in triplet:
+        IDs.append(index)
+
+    crat1 = craters_det_sort.iloc[IDs[0]]
+    crat2 = craters_det_sort.iloc[IDs[1]]
+    crat3 = craters_det_sort.iloc[IDs[2]]
+    return crat1, crat2, crat3
+
+
+def findAngles(a, b, c):
+    # applied cosine rule
+    A = np.arccos((b * b + c * c - a * a) / (2 * b * c))
+    B = np.arccos((a * a + c * c - b * b) / (2 * a * c))
+    C = np.arccos((b * b + a * a - c * c) / (2 * b * a))
+    # convert into degrees
+    A, B, C = np.rad2deg(A), np.rad2deg(B), np.rad2deg(C)
+    return A, B, C
+
+
+def dist_ctrs(c1, c2):
+    deg2km = 2 * np.pi * 1737.1 / 360
+    return np.linalg.norm(c1[0:2] - c2[0:2]) * deg2km
+
+
+def find_max_crt_dist(triplet):
+    a = dist_ctrs(triplet[0], triplet[1])
+    b = dist_ctrs(triplet[1], triplet[2])
+    c = dist_ctrs(triplet[2], triplet[0])
+    return np.max([a, b, c])
+
+
+def find_max_radius(triplet):
+    a = triplet[0].r
+    b = triplet[1].r
+    c = triplet[2].r
+    return np.max([a, b, c])  # Expressed in Km
+
+
+def find_bounds(triplet):
+    a = triplet[0]
+    b = triplet[1]
+    c = triplet[2]
+    lat_min = np.min([a.lat, b.lat, c.lat])
+    lat_max = np.max([a.lat, b.lat, c.lat])
+    lon_min = np.min([a.lon, b.lon, c.lon])
+    lon_max = np.max([a.lon, b.lon, c.lon])
+    return lat_min, lat_max, lon_min, lon_max
+
+
 def main():
     pass
 
 
 if __name__ == "__main__":
     main()
-
