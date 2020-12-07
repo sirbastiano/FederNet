@@ -5,7 +5,7 @@
 /Tirocinio_data
 /__pycache__
 /notebook_scaricati
-MASKRCNN
-utility/__pycache__
-Match/__pycache__
-KalmanFilter/__pycache__
+/MASKRCNN
+/utility/__pycache__
+/Match/__pycache__
+/KalmanFilter/__pycache__
