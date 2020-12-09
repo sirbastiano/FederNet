@@ -237,16 +237,18 @@ def find_triplet(df, idx: int):
         return PICKS
 
     pick1 = df.iloc[idx]
+    
     deg2km = 2 * np.pi * 1737.1 / 360
-
-    PICKS = ij_picks(pick1, df, 25)
+    n = 35
+    
+    PICKS = ij_picks(pick1, df, n)
 
     ind = 0
     HP = np.zeros(2)  # Hypothesis
     for pick in PICKS.iloc:
         pick2 = pick
         dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
-        if dist_12 * deg2km > pick2.r + pick1.r:
+        if dist_12 > (pick1.r+pick2.r)/2:
             hp = np.hstack([ind, dist_12])
             HP = np.vstack([HP, hp])
         ind += 1
@@ -255,9 +257,17 @@ def find_triplet(df, idx: int):
         HP = HP[1:, :].copy()  # Remove first zeros
         HP.view("f8,f8").sort(order=["f1"], axis=0)  # Order by Eu Distance
         crater1 = pick1
-        crater2 = PICKS.iloc[int(HP[0, 0])]
-        crater3 = PICKS.iloc[int(HP[1, 0])]
-        return [crater1, crater2, crater3]
+        pick2 = PICKS.iloc[int(HP[0, 0])]
+        pick3 = PICKS.iloc[int(HP[1, 0])]
+        if pick2.name == pick3.name:
+            jj=2
+            while (pick2.name == pick3.name):
+                if int(HP[jj, 0]) is not None:
+                    pick3 = PICKS.iloc[int(HP[jj, 0])]
+                    jj+=1
+                else: return None
+        
+        return [pick1, pick2, pick3]
     else:
         return None
 
@@ -277,28 +287,88 @@ def compute_sides(triplet):
     return a, b, c
 
 
-def find_triplets(df):
-    N, triplet_list = len(df), []
-    for idx in range(N):
-        # 1st:
-        if idx == 0:
-            c1, c2, c3 = find_triplet(df, 0)
-            if np.all([c1, c2, c3]) != None:  # If they exist
-                entry = set([c1.name, c2.name, c3.name])
-                triplet_list.append(entry)
-        # 2nd to end:
-        else:
-            c1, c2, c3 = find_triplet(df, idx)
-            if np.all([c1, c2, c3]) != None:  # If they exist
-                entry = set(
-                    [c1.name, c2.name, c3.name]
-                )  # Note: set() make order meaningless
-                if entry not in triplet_list:
-                    triplet_list.append(entry)
-        printProgressBar(idx, N, prefix="Progress:",
-                         suffix="Complete", length=50)
+def find_other_triplet(triplet, STORED, PICKS, HP):
+    pick1 = triplet[0]
+    pick2 = triplet[1]
+    pick3 = triplet[2]
 
-    return triplet_list
+    Names = [pick1.name,pick2.name,pick3.name]
+    names = set(Names)
+    
+    cond1 = (names in STORED)
+    cond2 = ((pick2.name == pick3.name) | (pick3.name == pick1.name)| (pick1.name == pick2.name))
+
+    jj = 3
+    while (cond1 & cond2):
+                try:
+                    pick2 = PICKS.iloc[int(HP[jj-1, 0])]
+                    pick3 = PICKS.iloc[int(HP[jj, 0])]
+                    Names = [pick1.name,pick2.name,pick3.name]
+                    names = set(Names)
+                    jj+=1
+                except IndexError: return None
+        
+    return [pick1, pick2, pick3]
+                    
+def find_triplet(df, idx: int):
+    # INPUT: df sorted ij, index
+    # OUTPUT: triplet
+    def ij_picks(pick, df, n):
+        i = pick.i
+        j = pick.j
+        for k in range(n):
+            if k == 0:
+                PICKS = df[
+                    (df.j == j - k)
+                    | (df.j == j + k)
+                    | (df.i == i + k)
+                    | (df.i == i - k)
+                ]
+            else:
+                tmp = df[
+                    (df.j == j - k)
+                    | (df.j == j + k)
+                    | (df.i == i + k)
+                    | (df.i == i - k)
+                ]
+                PICKS = pd.concat([PICKS, tmp])
+        return PICKS
+
+    pick1 = df.iloc[idx]
+    
+    deg2km = 2 * np.pi * 1737.1 / 360
+    n = 25
+    
+    PICKS = ij_picks(pick1, df, n)
+    PICKS = PICKS.drop_duplicates()
+
+    ind = 0
+    HP = np.zeros(2)  # Hypothesis
+    for pick in PICKS.iloc:
+        pick2 = pick
+        dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
+        if dist_12 > (pick1.r+pick2.r)/2:
+            hp = np.hstack([ind, dist_12])
+            HP = np.vstack([HP, hp])
+        ind += 1
+
+    if HP.shape[0] > 3: # At least 3 craters
+        HP = HP[1:, :].copy()  # Remove first zeros
+        HP.view("f8,f8").sort(order=["f1"], axis=0)  # Order by Eu Distance
+        pick2 = df.iloc[int(HP[0, 0])]
+        pick3 = df.iloc[int(HP[1, 0])]
+        if pick2.name == pick3.name:
+            jj=2
+            while (pick2.name == pick3.name) | (pick1.name == pick2.name) | (pick1.name == pick3.name):
+                try:
+                    pick3 = PICKS.iloc[int(HP[jj, 0])]
+                    jj+=1
+                except IndexError: return None
+
+        
+        return [pick1, pick2, pick3], HP, PICKS
+    else:
+        return None
 
 
 def picktrip(TRI, idx):
@@ -359,3 +429,81 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+# from numba import njit
+
+# @njit
+# def findAngles(a, b, c):
+#         # applied cosine rule
+#         A = np.arccos((b * b + c * c - a * a) / (2 * b * c))
+#         B = np.arccos((a * a + c * c - b * b) / (2 * a * c))
+#         C = np.arccos((b * b + a * a - c * c) / (2 * b * a))
+#         # convert into degrees
+#         A, B, C = np.rad2deg(A), np.rad2deg(B), np.rad2deg(C)
+#         return A, B, C
+
+
+# @njit
+# def compute_K_vet(triplet):
+#         a, b, c = compute_sides(triplet)
+#         A, B, C = findAngles(a, b, c)
+#         K_vet = np.array([A, B, C])
+#         if K_vet is not None:
+#             return K_vet
+
+# @njit
+# def compute_sides(triplet):
+#         a = np.linalg.norm(triplet[0][0:2] - triplet[1][0:2])
+#         b = np.linalg.norm(triplet[1][0:2] - triplet[2][0:2])
+#         c = np.linalg.norm(triplet[2][0:2] - triplet[0][0:2])
+#         return a, b, c
+
+
+# def find_all_triplets(craters):
+
+#     def Hstack(K_v, i,j,k):
+#         A = np.zeros(6)
+#         A[0],A[1],A[2] = K_v[0],K_v[1],K_v[2]
+#         A[3],A[4],A[5] = i,j,k
+#         return A
+        
+
+#     def concat(a,b,c):
+#         A = np.zeros((3,3))
+#         A[0] = a
+#         A[1] = b
+#         A[2] = c
+#         return A
+
+#     # Input: np.array craters
+#     # Output: all triplets
+#     N = craters.shape[0]
+#     ender = N*N*N
+#     K = np.zeros((ender,6))
+#     lister = 0
+#     for i in range(N):
+#         for j in range(N):
+#             for k in range(N):
+#                 if (i!=j) & (j!=k):
+#                     a =craters[i]
+#                     b =craters[j]
+#                     c =craters[k]
+#                     triplet = concat(a,b,c)
+#                     try:
+#                         K_v = compute_K_vet(triplet)
+#                         K[lister] = Hstack(K_v, i,j,k)
+#                     except ZeroDivisionError: pass
+                    
+#                 lister+=1
+#     return K[ np.all(K !=0, axis=1) ]
