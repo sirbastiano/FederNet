@@ -6,3 +6,5 @@
 /notebook_scaricati
 **/__pycache__
 /MASKRCNN/Mask_RCNN
+Dataset/train_dts_full_thin2px.h5
+Dataset/validation_dts_full_thin2px.h5
