@@ -279,7 +279,6 @@ def find_triplet(df, idx: int):
 
     pick1 = df.iloc[idx]
 
-    deg2km = 2 * np.pi * 1737.1 / 360
     n = 25
 
     PICKS = ij_picks(pick1, df, n)
@@ -289,10 +288,11 @@ def find_triplet(df, idx: int):
     HP = np.zeros(2)  # Hypothesis
     for pick in PICKS.iloc:
         pick2 = pick
-        dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
-        if dist_12 > (pick1.r+pick2.r)/2:
-            hp = np.hstack([ind, dist_12])
-            HP = np.vstack([HP, hp])
+        if pick2.name != pick1.name:
+            dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
+            if dist_12 > (pick1.r+pick2.r)/2:
+                hp = np.hstack([ind, dist_12])
+                HP = np.vstack([HP, hp])
         ind += 1
 
     if HP.shape[0] > 3:  # At least 3 craters
