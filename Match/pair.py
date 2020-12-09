@@ -13,32 +13,32 @@ def sq_dif(f1, f2):
 
 
 # init
-def matching(crat_det, crat_cat):
-
-    mat1 = crat_det
-    mat2 = crat_cat
-
-    MATCHER = []
-    for i in range(mat1.shape[0]):
-        for j in range(mat2.shape[0]):
-            f1 = mat1[i, :]
-            f2 = mat2[j, :]
-            tmp = sq_dif(f1, f2)
-            TMP = [i, j, tmp]
-            MATCHER.append(TMP)
-    flag = np.zeros(2)
-    for elem in MATCHER:
-        if elem[2] < 100:
-            match = [elem[0], elem[1]]
-            flag = np.vstack((flag, match))
-
-    if flag.shape != (2,):
-        flag = flag[1:, :]
-    else:
-        return None
-    flag = np.array(flag).astype(int)
-    # flag = remove_mutliple_items(flag)
-    return flag
+# def matching(crat_det, crat_cat):
+#
+#    mat1 = crat_det
+#    mat2 = crat_cat
+#
+#    MATCHER = []
+#    for i in range(mat1.shape[0]):
+#        for j in range(mat2.shape[0]):
+#            f1 = mat1[i, :]
+#            f2 = mat2[j, :]
+#            tmp = sq_dif(f1, f2)
+#            TMP = [i, j, tmp]
+#            MATCHER.append(TMP)
+#    flag = np.zeros(2)
+#    for elem in MATCHER:
+#        if elem[2] < 100:
+#            match = [elem[0], elem[1]]
+#            flag = np.vstack((flag, match))
+#
+#    if flag.shape != (2,):
+#        flag = flag[1:, :]
+#    else:
+#        return None
+#    flag = np.array(flag).astype(int)
+#    # flag = remove_mutliple_items(flag)
+#    return flag
 
 
 def craters_to_relative_frame(df, lon_b, lat_b, u=None):
@@ -99,7 +99,8 @@ def crater_catalogued(current_pos):
     filepath = "/home/sirbastiano/Desktop/Python Projects/Progetto Tesi/DATA/lunar_crater_database_robbins_2018.csv"
     DB = pd.read_csv(filepath, sep=",")
     df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
-    crater_catalogued_onboard = craters_to_relative_frame(df, lon_bounds, lat_bounds)
+    crater_catalogued_onboard = craters_to_relative_frame(
+        df, lon_bounds, lat_bounds)
     return crater_catalogued_onboard
 
 
@@ -117,9 +118,11 @@ def crater_match(current_pos, craters_detected):
     DB = pd.read_csv(filepath, sep=",")
     df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
 
-    crater_catalogued_onboard = craters_to_relative_frame(df, lon_bounds, lat_bounds)
+    crater_catalogued_onboard = craters_to_relative_frame(
+        df, lon_bounds, lat_bounds)
     # MATCHING
-    indexes = matching(crat_det=craters_detected, crat_cat=crater_catalogued_onboard)
+    indexes = matching(crat_det=craters_detected,
+                       crat_cat=crater_catalogued_onboard)
     if indexes is not None:
         FEATURE = np.zeros(3)
         for i in range(indexes.shape[0]):
@@ -201,10 +204,10 @@ def position_estimation(pos, craters_detected, craters_catalogued, indexes):
 
 
 def sort_mat(mat: np.array):
-    mat_df = pd.DataFrame(mat, columns=["X", "Y", "R"])
-    mat_sort_x = mat_df.sort_values(by=["X"]).copy()
+    mat_df = pd.DataFrame(mat, columns=["x", "y", "r"])
+    mat_sort_x = mat_df.sort_values(by=["x"]).copy()
     mat_sort_x.insert(3, "i", range(len(mat_sort_x)))
-    mat_sort_xy = mat_sort_x.sort_values(by=["Y"])
+    mat_sort_xy = mat_sort_x.sort_values(by=["y"])
     mat_sort_xy.insert(4, "j", range(len(mat_sort_xy)))
     return mat_sort_xy.sort_index()
 
@@ -292,7 +295,8 @@ def find_triplets(df):
                 )  # Note: set() make order meaningless
                 if entry not in triplet_list:
                     triplet_list.append(entry)
-        printProgressBar(idx, N, prefix="Progress:", suffix="Complete", length=50)
+        printProgressBar(idx, N, prefix="Progress:",
+                         suffix="Complete", length=50)
 
     return triplet_list
 

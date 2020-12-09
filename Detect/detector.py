@@ -1,3 +1,8 @@
+from mrcnn.model import log
+from mrcnn import visualize
+import mrcnn.model as modellib
+from mrcnn import utils
+from mrcnn.config import Config
 import os
 import sys
 import numpy as np
@@ -15,11 +20,6 @@ ROOT_DIR = os.path.abspath("../../")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
-from mrcnn.config import Config
-from mrcnn import utils
-import mrcnn.model as modellib
-from mrcnn import visualize
-from mrcnn.model import log
 
 
 class ShapesConfig(Config):
@@ -64,7 +64,7 @@ class ShapesConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 16
     # Additional Setting by user
-    DETECTION_MIN_CONFIDENCE = 0.5
+    DETECTION_MIN_CONFIDENCE = 0.95
     DETECTION_NMS_THRESHOLD = 0.4
 
 
@@ -72,7 +72,7 @@ def get_ax(rows=1, cols=1, size=15):
     """Return a Matplotlib Axes array to be used in
     all visualizations in the notebook. Provide a
     central point to control graph sizes.
-    
+
     Change the default size attribute to control the size
     of rendered images
     """
@@ -89,7 +89,8 @@ def inspect_results(img, bboxs, color="red"):
         d1, d2 = abs(d1), abs(d2)
 
         r = (d1 + d2) // 4
-        x_c, y_c = (b[i, :][1] + b[i, :][3]) // 2, (b[i, :][0] + b[i, :][2]) // 2
+        x_c, y_c = (b[i, :][1] + b[i, :][3]
+                    ) // 2, (b[i, :][0] + b[i, :][2]) // 2
 
         center_coordinates = (x_c, y_c)
         radius = r
@@ -212,9 +213,9 @@ def match_prep(b, scores, img_dim):
         if radius > img_dim/3:
             if score > 0.6+0.00114*radius:
                 vstack = np.vstack((vstack, brick))
-        else:              
+        else:
             vstack = np.vstack((vstack, brick))
-    
+
     vstack = vstack[1:, :]
     return vstack
 
@@ -254,10 +255,30 @@ def detect(img):
     return carters_detected
 
 
+def img_plus_crts(img, craters_det, color="red"):
+    b = craters_det
+    image = img.copy()
+    for i in range(b.shape[0]):
+
+        r = b[i][2]
+        x_c, y_c = b[i][0], b[i][1]
+
+        center_coordinates = (int(x_c), int(y_c))
+        radius = int(r)
+        if color == "red":
+            color = (255, 0, 0)
+        elif color == "green":
+            color = (0, 255, 0)
+
+        thickness = 2
+        cv2.circle(image, center_coordinates, radius, color, thickness)
+
+    return image
+
+
 def main():
     pass
 
 
 if __name__ == "__main__":
     main()
-
