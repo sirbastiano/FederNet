@@ -253,9 +253,13 @@ def find_other_triplet(triplet, STORED, PICKS, HP):
     return [pick1, pick2, pick3]
 
 
-def find_triplet(df, idx: int):
+def find_triplet(df, idx_a: int, idx_b: int):
+    if idx_a == idx_b:
+        print('Index must be different!')
+        pass
     # INPUT: df sorted ij, index
     # OUTPUT: triplet
+
     def ij_picks(pick, df, n):
         i = pick.i
         j = pick.j
@@ -277,7 +281,8 @@ def find_triplet(df, idx: int):
                 PICKS = pd.concat([PICKS, tmp])
         return PICKS
 
-    pick1 = df.iloc[idx]
+    pick1 = df.iloc[idx_a]
+    pick2 = df.iloc[idx_b]
 
     n = 25
 
@@ -287,22 +292,21 @@ def find_triplet(df, idx: int):
     ind = 0
     HP = np.zeros(2)  # Hypothesis
     for pick in PICKS.iloc:
-        pick2 = pick
-        if pick2.name != pick1.name:
-            dist_12 = np.linalg.norm(pick2[0:2] - pick1[0:2])
-            if dist_12 > (pick1.r+pick2.r)/2:
-                hp = np.hstack([ind, dist_12])
-                HP = np.vstack([HP, hp])
+        if pick.name != pick1.name:
+            dist_1 = np.linalg.norm(pick[0:2] - pick1[0:2])
+            dist_2 = np.linalg.norm(pick[0:2] - pick2[0:2])
+            dist_12 = min([dist_1, dist_2])
+            hp = np.hstack([ind, dist_12])
+            HP = np.vstack([HP, hp])
         ind += 1
 
     if HP.shape[0] > 3:  # At least 3 craters
         HP = HP[1:, :].copy()  # Remove first zeros
         HP.view("f8,f8").sort(order=["f1"], axis=0)  # Order by Eu Distance
-        pick2 = df.iloc[int(HP[0, 0])]
-        pick3 = df.iloc[int(HP[1, 0])]
+        pick3 = df.iloc[int(HP[0, 0])]
         if pick2.name == pick3.name:
-            jj = 2
-            while (pick2.name == pick3.name) | (pick1.name == pick2.name) | (pick1.name == pick3.name):
+            jj = 1
+            while (pick2.name == pick3.name) | (pick1.name == pick3.name):
                 try:
                     pick3 = PICKS.iloc[int(HP[jj, 0])]
                     jj += 1
