@@ -340,9 +340,14 @@ def findAngles(a, b, c):
     return A, B, C
 
 
-def dist_ctrs(c1, c2):
-    deg2km = 2 * np.pi * 1737.1 / 360
-    return np.linalg.norm(c1[0:2] - c2[0:2]) * deg2km
+def dist_ctrs(c1, c2, input = 'deg'):
+    x = c1[0:2]
+    y = c2[0:2]
+    if input == 'deg':
+        deg2km = 2 * np.pi * 1737.4 / 360
+        return eu_dist(x,y) * deg2km
+    else:
+        return eu_dist(x,y)
 
 
 def find_max_crt_dist(triplet):
@@ -376,71 +381,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# from numba import njit
-
-# @njit
-# def findAngles(a, b, c):
-#         # applied cosine rule
-#         A = np.arccos((b * b + c * c - a * a) / (2 * b * c))
-#         B = np.arccos((a * a + c * c - b * b) / (2 * a * c))
-#         C = np.arccos((b * b + a * a - c * c) / (2 * b * a))
-#         # convert into degrees
-#         A, B, C = np.rad2deg(A), np.rad2deg(B), np.rad2deg(C)
-#         return A, B, C
-
-
-# @njit
-# def compute_K_vet(triplet):
-#         a, b, c = compute_sides(triplet)
-#         A, B, C = findAngles(a, b, c)
-#         K_vet = np.array([A, B, C])
-#         if K_vet is not None:
-#             return K_vet
-
-# @njit
-# def compute_sides(triplet):
-#         a = np.linalg.norm(triplet[0][0:2] - triplet[1][0:2])
-#         b = np.linalg.norm(triplet[1][0:2] - triplet[2][0:2])
-#         c = np.linalg.norm(triplet[2][0:2] - triplet[0][0:2])
-#         return a, b, c
-
-
-# def find_all_triplets(craters):
-
-#     def Hstack(K_v, i,j,k):
-#         A = np.zeros(6)
-#         A[0],A[1],A[2] = K_v[0],K_v[1],K_v[2]
-#         A[3],A[4],A[5] = i,j,k
-#         return A
-
-
-#     def concat(a,b,c):
-#         A = np.zeros((3,3))
-#         A[0] = a
-#         A[1] = b
-#         A[2] = c
-#         return A
-
-#     # Input: np.array craters
-#     # Output: all triplets
-#     N = craters.shape[0]
-#     ender = N*N*N
-#     K = np.zeros((ender,6))
-#     lister = 0
-#     for i in range(N):
-#         for j in range(N):
-#             for k in range(N):
-#                 if (i!=j) & (j!=k):
-#                     a =craters[i]
-#                     b =craters[j]
-#                     c =craters[k]
-#                     triplet = concat(a,b,c)
-#                     try:
-#                         K_v = compute_K_vet(triplet)
-#                         K[lister] = Hstack(K_v, i,j,k)
-#                     except ZeroDivisionError: pass
-
-#                 lister+=1
-#     return K[ np.all(K !=0, axis=1) ]

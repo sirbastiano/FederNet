@@ -256,6 +256,7 @@ def detect(img):
 
 
 def img_plus_crts(img, craters_det, color="red"):
+    # Input: Img:3 chanel, craters_det: np.array
     b = craters_det
     image = img.copy()
     for i in range(b.shape[0]):
