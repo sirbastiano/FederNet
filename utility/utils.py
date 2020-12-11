@@ -4,14 +4,11 @@ import pandas as pd
 import cv2
 
 
-def marg(x, y, r, d):
-    if len(x) != (len(y) or len(r) or len(d)):
-        print("Shape Error! Check the input dimensions.")
-        return
-
-    cond = (y > 0) & (y < 1) & (x > 0) & (x < 1)
-    x, y, r, d = x[cond], y[cond], r[cond], d[cond]
-    return x, y, r, d
+def eu_dist(x, y):
+    x1, y1 = x[0], x[1]
+    x2, y2 = y[0], y[1]
+    result = ((((x2 - x1)**2) + ((y2-y1)**2))**0.5)
+    return result
 
 
 def draw_craters(df, lon_b, lat_b, u=None):
@@ -35,7 +32,7 @@ def draw_craters(df, lon_b, lat_b, u=None):
         W, H = (
             img.shape[0],
             img.shape[1],
-        )  #  TODO change the function to non-square shapes
+        )  # TODO change the function to non-square shapes
         img = np.ascontiguousarray(img, dtype=np.uint8)
         # Cycle through the dataframe:
         for i in range(df.shape[0]):
@@ -57,7 +54,8 @@ def draw_craters(df, lon_b, lat_b, u=None):
                 radius = int(crater.Diam / 2 * KM_to_PX)
                 color = 255
                 thickness = 3
-                img = cv2.circle(img, center_coordinates, radius, color, thickness)
+                img = cv2.circle(img, center_coordinates,
+                                 radius, color, thickness)
         return img
 
 
@@ -81,7 +79,7 @@ def draw_craters_on_image(df, lon_b, lat_b, img, u=None):
         W, H = (
             img.shape[0],
             img.shape[1],
-        )  #  TODO change the function to non-square shapes
+        )  # TODO change the function to non-square shapes
         img = np.ascontiguousarray(img, dtype=np.uint8)
         # Cycle through the dataframe:
         for i in range(df.shape[0]):
@@ -103,7 +101,8 @@ def draw_craters_on_image(df, lon_b, lat_b, img, u=None):
                 radius = int(crater.Diam / 2 * KM_to_PX)
                 color = (0, 0, 255)
                 thickness = 3
-                img = cv2.circle(img, center_coordinates, radius, color, thickness)
+                img = cv2.circle(img, center_coordinates,
+                                 radius, color, thickness)
         return img
 
 
@@ -136,7 +135,8 @@ def spherical2cartesian(h, Lat, Lon):
     # Outputs: x, y, z
     ###########################################################################
     R_moon = 1737.4
-    x, y, z = spherical_to_cartesian(h + R_moon, np.deg2rad(Lat), np.deg2rad(Lon))
+    x, y, z = spherical_to_cartesian(
+        h + R_moon, np.deg2rad(Lat), np.deg2rad(Lon))
     return np.array(x), np.array(y), np.array(z)
 
 
@@ -173,7 +173,8 @@ def CatalogSearch(H, lat_bounds: np.array, lon_bounds: np.array, CAT_NAME):
     LONs_f1 = LONs_f1[filt]
     DIAMs = DIAMs[filt]
     if LONs_f1 != []:
-        craters = np.hstack([np.vstack(LONs_f1), np.vstack(LATs), np.vstack(DIAMs)])
+        craters = np.hstack(
+            [np.vstack(LONs_f1), np.vstack(LATs), np.vstack(DIAMs)])
         df = pd.DataFrame(data=craters, columns=["Lon", "Lat", "Diam"])
         return df
     else:
@@ -207,7 +208,8 @@ def printProgressBar(
         fill        - Optional  : bar fill character (Str)
         printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
     """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    percent = ("{0:." + str(decimals) + "f}").format(100 *
+                                                     (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + "-" * (length - filledLength)
     print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
@@ -215,10 +217,6 @@ def printProgressBar(
     if iteration == total:
         print()
 
-
-
-
-   
 
 def find_dteta(H) -> float:
     # Output in deg
@@ -268,4 +266,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
