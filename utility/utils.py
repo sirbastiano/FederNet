@@ -182,6 +182,11 @@ def CatalogSearch(H, lat_bounds: np.array, lon_bounds: np.array, CAT_NAME):
         LATs = np.array(H["LAT_CIRC_IMG"])
         DIAMs = np.array(H["DIAM_CIRC_IMG"])
 
+    elif CAT_NAME == "COMBINED":
+        LONs = np.array(H["lon"])
+        LATs = np.array(H["lat"])
+        DIAMs = np.array(H["diam"])
+
     LONs_f1 = np.where(LONs > 180, LONs - 360, LONs)
 
     cond1 = LONs_f1 < lon_bounds[1]
