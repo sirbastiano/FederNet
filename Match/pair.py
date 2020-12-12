@@ -68,21 +68,20 @@ def craters_to_relative_frame(df, lon_b, lat_b, u=None):
         craters = np.zeros(3)
         for i in range(df.shape[0]):
             crater = df.iloc[i]
-            if crater.Diam < 100:  # Only craters < 100 km
-                # crater center:
-                xc, yc = crater.Lon, crater.Lat  # This is in the absolute frame
-                # f: Absolute --> f: Relative
-                xc = xc - CAMx
-                yc = yc - CAMy
-                # f: relative --> f: OPENCV
-                xc *= u  # Now is in pixel not in lon deg
-                yc *= u  # Now is in pixel not in lat deg
-                xc = W / 2 + xc
-                yc = H / 2 - yc
-                # ? 1 km = 8.4746 px in our DEM := Merge LOLA - KAGUYA
-                KM_to_PX = 8.4746
-                crater_i = [xc, yc, crater.Diam / 2 * KM_to_PX]
-                craters = np.vstack([craters, crater_i])
+            # crater center:
+            xc, yc = crater.Lon, crater.Lat  # This is in the absolute frame
+            # f: Absolute --> f: Relative
+            xc = xc - CAMx
+            yc = yc - CAMy
+            # f: relative --> f: OPENCV
+            xc *= u  # Now is in pixel not in lon deg
+            yc *= u  # Now is in pixel not in lat deg
+            xc = W / 2 + xc
+            yc = H / 2 - yc
+            # ? 1 km = 8.4746 px in our DEM := Merge LOLA - KAGUYA
+            KM_to_PX = 1/0.118
+            crater_i = [xc, yc, crater.Diam / 2 * KM_to_PX]
+            craters = np.vstack([craters, crater_i])
         return craters[1:, :]
 
 
@@ -96,7 +95,7 @@ def crater_catalogued(current_pos):
         np.array([Lat - sp, Lat + sp]),
         np.array([Lon - sp, Lon + sp]),
     )
-    filepath = "/home/sirbastiano/Desktop/Python Projects/Progetto Tesi/DATA/lunar_crater_database_robbins_2018.csv"
+    filepath = "DATA/lunar_crater_database_robbins_2018.csv"
     DB = pd.read_csv(filepath, sep=",")
     df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
     crater_catalogued_onboard = craters_to_relative_frame(
@@ -340,14 +339,14 @@ def findAngles(a, b, c):
     return A, B, C
 
 
-def dist_ctrs(c1, c2, input = 'deg'):
+def dist_ctrs(c1, c2, input='deg'):
     x = c1[0:2]
     y = c2[0:2]
     if input == 'deg':
         deg2km = 2 * np.pi * 1737.4 / 360
-        return eu_dist(x,y) * deg2km
+        return eu_dist(x, y) * deg2km
     else:
-        return eu_dist(x,y)
+        return eu_dist(x, y)
 
 
 def find_max_crt_dist(triplet):

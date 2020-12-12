@@ -255,28 +255,6 @@ def detect(img):
     return carters_detected
 
 
-def img_plus_crts(img, craters_det, color="red"):
-    # Input: Img:3 chanel, craters_det: np.array
-    b = craters_det
-    image = img.copy()
-    for i in range(b.shape[0]):
-
-        r = b[i][2]
-        x_c, y_c = b[i][0], b[i][1]
-
-        center_coordinates = (int(x_c), int(y_c))
-        radius = int(r)
-        if color == "red":
-            color = (255, 0, 0)
-        elif color == "green":
-            color = (0, 255, 0)
-
-        thickness = 2
-        cv2.circle(image, center_coordinates, radius, color, thickness)
-
-    return image
-
-
 def main():
     pass
 
