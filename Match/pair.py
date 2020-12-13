@@ -12,33 +12,7 @@ def sq_dif(f1, f2):
     return np.sum(a)
 
 
-# init
-# def matching(crat_det, crat_cat):
-#
-#    mat1 = crat_det
-#    mat2 = crat_cat
-#
-#    MATCHER = []
-#    for i in range(mat1.shape[0]):
-#        for j in range(mat2.shape[0]):
-#            f1 = mat1[i, :]
-#            f2 = mat2[j, :]
-#            tmp = sq_dif(f1, f2)
-#            TMP = [i, j, tmp]
-#            MATCHER.append(TMP)
-#    flag = np.zeros(2)
-#    for elem in MATCHER:
-#        if elem[2] < 100:
-#            match = [elem[0], elem[1]]
-#            flag = np.vstack((flag, match))
-#
-#    if flag.shape != (2,):
-#        flag = flag[1:, :]
-#    else:
-#        return None
-#    flag = np.array(flag).astype(int)
-#    # flag = remove_mutliple_items(flag)
-#    return flag
+
 
 
 def craters_to_relative_frame(df, lon_b, lat_b, u=None):
@@ -211,19 +185,10 @@ def sort_mat(mat: np.array):
     return mat_sort_xy.sort_index()
 
 
-def compute_K_vet(triplet):
-    a, b, c = compute_sides(triplet)
-    A, B, C = findAngles(a, b, c)
-    K_vet = np.array([A, B, C])
-    if K_vet is not None:
-        return K_vet
 
 
-def compute_sides(triplet):
-    a = np.linalg.norm(triplet[0][0:2] - triplet[1][0:2])
-    b = np.linalg.norm(triplet[1][0:2] - triplet[2][0:2])
-    c = np.linalg.norm(triplet[2][0:2] - triplet[0][0:2])
-    return a, b, c
+
+
 
 
 def find_other_triplet(triplet, STORED, PICKS, HP):
@@ -329,14 +294,7 @@ def picktrip(TRI, idx):
     return crat1, crat2, crat3
 
 
-def findAngles(a, b, c):
-    # applied cosine rule
-    A = np.arccos((b * b + c * c - a * a) / (2 * b * c))
-    B = np.arccos((a * a + c * c - b * b) / (2 * a * c))
-    C = np.arccos((b * b + a * a - c * c) / (2 * b * a))
-    # convert into degrees
-    A, B, C = np.rad2deg(A), np.rad2deg(B), np.rad2deg(C)
-    return A, B, C
+
 
 
 def dist_ctrs(c1, c2, input='deg'):
