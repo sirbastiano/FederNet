@@ -3,7 +3,7 @@ from astropy.coordinates.funcs import spherical_to_cartesian, cartesian_to_spher
 import numpy as np
 import pandas as pd
 import cv2
-
+from copy import deepcopy
 
 def img_plus_crts(img, craters_det, color="red"):
     # Input: Img:3 chanel, craters_det: np.array
@@ -382,6 +382,13 @@ def find_all_triplets(craters):
 
                 lister += 1
     return K[np.all(K != 0, axis=1)]
+
+
+def swap_df_columns(colname_1, colname_2, df):
+    tmp = deepcopy(df[colname_1])
+    df[colname_1] = df[colname_2]
+    df[colname_2] = tmp
+    return df
 
 
 global km2px, deg2km
