@@ -328,7 +328,7 @@ def find_bounds(triplet):
     return lat_min, lat_max, lon_min, lon_max
 
 
-def inner_join(QUERY1, QUERY2, tol1, tol2):
+def inner_join_old(QUERY1, QUERY2, tol1, tol2):
     DFs, items = [], []
     for row in QUERY1.itertuples():
         Angle1_Q1, Angle2_Q1, Angle3_Q1 = row[0], row[1], row[2]
