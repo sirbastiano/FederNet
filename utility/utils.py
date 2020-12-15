@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import cv2
 from copy import deepcopy
+import glob
+
 
 def img_plus_crts(img, craters_det, color="red"):
     # Input: Img:3 chanel, craters_det: np.array
@@ -302,7 +304,7 @@ def findAngles(a, b, c):
 def compute_K_vet(triplet):
     a, b, c = compute_sides(triplet)
     A, B, C = findAngles(a, b, c)
-    K_vet = np.array([A, B, C])
+    K_vet = np.sort(np.array([A, B, C]))
     if K_vet is not None:
         return K_vet
 
@@ -394,6 +396,17 @@ def swap_df_columns(colname_1, colname_2, df):
 global km2px, deg2km
 km2px = 1/0.118
 deg2km = 2*np.pi*1737.4/360
+
+
+def load_all_images(dt):
+    # LOAD ALL IMAGES:
+    dt = 10
+    dict = {}
+    for img in glob.glob(f"DATA/ephemeris sat/inclination zero/{dt} step size/*"):
+        txt = img             # stringa
+        t = txt.split('_')[1]  # numero
+        dict[t] = txt
+    return dict
 
 
 def main():

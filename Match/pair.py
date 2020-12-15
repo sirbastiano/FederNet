@@ -435,6 +435,48 @@ def find_triplets(craters):
     return K[np.all(K != 0, axis=1)]
 
 
+def dropduplicates(df):
+    df = df.drop_duplicates(subset=['Angle1'], keep='first')
+    df = df.drop_duplicates(subset=['Angle2'], keep='first')
+    df = df.drop_duplicates(subset=['Angle3'], keep='first')
+    return df
+
+
+def inner_join(q1, q2, tol1):
+    DFs, items = [], []
+    s = pd.DataFrame()
+    for ind, row in q1.iterrows():
+
+        cond1 = ((abs(row.Angle1 - q2.Angle1) < tol1))
+        cond1_a = ((abs(row.Angle2 - q2.Angle2) < tol1))
+        cond1_b = ((abs(row.Angle3 - q2.Angle3) < tol1))
+        cond1_c = ((abs(row.Angle2 - q2.Angle3) < tol1))
+        cond1_d = ((abs(row.Angle3 - q2.Angle2) < tol1))
+        A = ((cond1 & cond1_a & cond1_b) | (cond1 & cond1_c & cond1_d))
+        ###############################################
+        cond2 = ((abs(row.Angle1 - q2.Angle2) < tol1))
+        cond2_a = ((abs(row.Angle2 - q2.Angle1) < tol1))
+        cond2_b = ((abs(row.Angle3 - q2.Angle3) < tol1))
+        cond2_c = ((abs(row.Angle2 - q2.Angle3) < tol1))
+        cond2_d = ((abs(row.Angle3 - q2.Angle1) < tol1))
+        B = ((cond2 & cond2_a & cond2_b) | (cond2 & cond2_c & cond2_d))
+        ###############################################
+        cond3 = ((abs(row.Angle1 - q2.Angle3) < tol1))
+        cond3_a = ((abs(row.Angle2 - q2.Angle1) < tol1))
+        cond3_b = ((abs(row.Angle3 - q2.Angle2) < tol1))
+        cond3_c = ((abs(row.Angle2 - q2.Angle2) < tol1))
+        cond3_d = ((abs(row.Angle3 - q2.Angle1) < tol1))
+        C = ((cond3 & cond3_a & cond3_b) | (cond3 & cond3_c & cond3_d))
+
+        s = q2[A | B | C]
+
+        if s.shape[0] > 0:
+            DFs.append(s)
+            items.append(row)
+
+    return DFs, items
+
+
 def main():
     pass
 
