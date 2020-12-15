@@ -12,9 +12,6 @@ def sq_dif(f1, f2):
     return np.sum(a)
 
 
-
-
-
 def craters_to_relative_frame(df, lon_b, lat_b, u=None):
     lon_bounds = lon_b
     lat_bounds = lat_b
@@ -59,7 +56,7 @@ def craters_to_relative_frame(df, lon_b, lat_b, u=None):
         return craters[1:, :]
 
 
-def crater_catalogued(current_pos):
+def crater_catalogued(current_pos, catalog='ROBBINS'):
     # CATALOG SEARCH:
     x, y, z = current_pos[0], current_pos[1], current_pos[2]
     H, Lat, Lon = cartesian2spherical(x, y, z)  # x,y,z --> H, Lat, Lon
@@ -69,9 +66,17 @@ def crater_catalogued(current_pos):
         np.array([Lat - sp, Lat + sp]),
         np.array([Lon - sp, Lon + sp]),
     )
-    filepath = "DATA/lunar_crater_database_robbins_2018.csv"
-    DB = pd.read_csv(filepath, sep=",")
-    df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
+    if catalog == 'ROBBINS':
+        filepath = "DATA/lunar_crater_database_robbins_2018.csv"
+        DB = pd.read_csv(filepath, sep=",")
+        df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="ROBBINS")
+    elif catalog == 'COMBINED':
+        filepath = "DATA/H_L_combined.csv"
+        DB = pd.read_csv(filepath, sep=",")
+        df = CatalogSearch(DB, lat_bounds, lon_bounds, CAT_NAME="COMBINED")
+    else:
+        print("Catalog Not Available!")
+        return None
     crater_catalogued_onboard = craters_to_relative_frame(
         df, lon_bounds, lat_bounds)
     return crater_catalogued_onboard
@@ -185,12 +190,6 @@ def sort_mat(mat: np.array):
     return mat_sort_xy.sort_index()
 
 
-
-
-
-
-
-
 def find_other_triplet(triplet, STORED, PICKS, HP):
     pick1 = triplet[0]
     pick2 = triplet[1]
@@ -292,9 +291,6 @@ def picktrip(TRI, idx):
     crat2 = craters_det_sort.iloc[IDs[1]]
     crat3 = craters_det_sort.iloc[IDs[2]]
     return crat1, crat2, crat3
-
-
-
 
 
 def dist_ctrs(c1, c2, input='deg'):
