@@ -328,6 +328,113 @@ def find_bounds(triplet):
     return lat_min, lat_max, lon_min, lon_max
 
 
+def inner_join(QUERY1, QUERY2, tol1, tol2):
+    DFs, items = [], []
+    for row in QUERY1.itertuples():
+        Angle1_Q1, Angle2_Q1, Angle3_Q1 = row[0], row[1], row[2]
+        d1_Q1, d2_Q1, d3_Q1 = row[3], row[4], row[5]
+
+        SEARCH = QUERY2[((abs(QUERY2.Angle1 - Angle1_Q1) < tol1) & (abs(QUERY2.Angle2-Angle2_Q1) < tol1) & (abs(QUERY2.Angle3-Angle3_Q1) < tol1))
+                        | ((abs(QUERY2.Angle1 - Angle2_Q1) < tol1) & (abs(QUERY2.Angle2 - Angle3_Q1) < tol1) & (abs(QUERY2.Angle3 - Angle1_Q1) < tol1))
+                        | ((abs(QUERY2.Angle1 - Angle3_Q1) < tol1) & (abs(QUERY2.Angle2 - Angle1_Q1) < tol1) & (abs(QUERY2.Angle3 - Angle2_Q1) < tol1))]
+
+        SEARCH = SEARCH[((abs(QUERY2.des1 - d1_Q1) < tol2) & (abs(QUERY2.des2 - d2_Q1) < tol2) & (abs(QUERY2.des3 - d3_Q1) < tol2))
+                        | ((abs(QUERY2.des1 - d2_Q1) < tol2) & (abs(QUERY2.des2 - d3_Q1) < tol2) & (abs(QUERY2.des3 - d1_Q1) < tol2))
+                        | ((abs(QUERY2.des1 - d3_Q1) < tol2) & (abs(QUERY2.des2 - d1_Q1) < tol2) & (abs(QUERY2.des3 - d2_Q1) < tol2))]
+
+        if SEARCH.shape[0] != 0:
+            items.append(row)
+            DFs.append(SEARCH)
+    return DFs, items
+
+
+def compute_centroid(trip):
+    x1, x2, x3 = trip[0][0], trip[1][0], trip[2][0]
+    y1, y2, y3 = trip[0][1], trip[1][1], trip[2][1]
+
+    xc = (x1+x2+x3)/3
+    yc = (y1+y2+y3)/3
+    return [xc, yc]
+
+
+def find_triplets(craters):
+
+    def Hstack(K_v, i, j, k, x1, y1, r1, x2, y2, r2, x3, y3, r3):
+        A = np.zeros(15)
+        A[0], A[1], A[2] = K_v[0], K_v[1], K_v[2]
+        A[3], A[4], A[5] = i, j, k
+        A[6], A[7], A[8] = x1, y1, r1
+        A[9], A[10], A[11] = x2, y2, r2
+        A[12], A[13], A[14] = x3, y3, r3
+        return A
+
+    def eu_dist(x, y):
+        x1, y1 = x[0], x[1]
+        x2, y2 = y[0], y[1]
+        result = ((((x2 - x1)**2) + ((y2-y1)**2))**0.5)
+        return result
+
+    def concat(a, b, c):
+        A = np.zeros((3, 3))
+        A[0] = a
+        A[1] = b
+        A[2] = c
+        return A
+
+    # Input: np.array craters
+    # Output: all triplets
+    N = craters.shape[0]
+    ender = N*N
+    K = np.zeros((ender, 15))
+    lister = 0
+    for i in range(N):
+        printProgressBar(i+1, N, printEnd='')
+        for j in range(N):
+            MIN = np.array([9999, 9999])
+            for k in range(N):
+                if (i != j) & (j != k):
+                    a = craters[i]
+                    b = craters[j]
+                    c = craters[k]
+                    triplet = concat(a, b, c)
+                    x1, y1, r1 = a[0], a[1], a[2]
+                    x2, y2, r2 = b[0], b[1], b[2]
+                    x3, y3, r3 = c[0], c[1], c[2]
+
+                    C = np.zeros(2)  # centroid
+                    C[0] = (x1+x2+x3)/3
+                    C[1] = (y1+y2+y3)/3
+
+                    P1, P2, P3 = np.zeros(2), np.zeros(2), np.zeros(2)
+                    P1[0] = x1
+                    P1[1] = y1
+                    P2[0] = x2
+                    P2[1] = y2
+                    P3[0] = x3
+                    P3[1] = y3
+
+                    D1 = eu_dist(P1, P3)
+                    D2 = eu_dist(P2, P3)
+
+                    if (D1 < MIN[0]) & (D2 < MIN[1]):
+                        MIN[0], MIN[1] = D1, D2
+
+                        d1, d2, d3 = eu_dist(P1, C), eu_dist(
+                            P2, C), eu_dist(P3, C)
+                        d_i, d_j, d_k = d1/r1, d2/r2, d3/r3
+
+                        try:
+                            K_v = compute_K_vet(triplet)
+                            K[lister] = Hstack(
+                                K_v, d_i, d_j, d_k, x1, y1, r1, x2, y2, r2, x3, y3, r3)
+                        except ZeroDivisionError:
+                            pass
+
+            lister += 1
+
+    return K[np.all(K != 0, axis=1)]
+
+
 def main():
     pass
 
