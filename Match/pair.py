@@ -476,6 +476,36 @@ def inner_join(q1, q2, tol1):
 
     return DFs, items
 
+# Computing centroid local:
+
+
+def compute_pos(A, B):
+    hp = A
+    x1, x2, x3 = hp.x1, hp.x2, hp.x3
+    y1, y2, y3 = hp.y1, hp.y2, hp.y3
+    xc = float((x1+x2+x3)/3)
+    yc = float((y1+y2+y3)/3)
+
+    XC, YC = 850/2, 850/2
+
+    delta_x = XC-xc
+    delta_y = YC-yc
+    # Recompute centroid in LAT-LON:
+    hp = B
+    x1, x2, x3 = hp.lon1, hp.lon2, hp.lon3
+    y1, y2, y3 = hp.lat1, hp.lat2, hp.lat3
+    xc_lon = (x1+x2+x3)/3
+    yc_lat = (y1+y2+y3)/3
+
+    u = 257.52  # ? DEG TO PXS
+    px2deg = 1/u  # pixel to degree
+    delta_x *= px2deg
+    delta_y *= px2deg
+
+    C = [xc_lon, yc_lat]
+    pos = [C[0]-delta_x, C[1]-delta_y]
+    return pos
+
 
 def main():
     pass
