@@ -6,6 +6,8 @@ import cv2
 from copy import deepcopy
 import glob
 
+from Match.icp import icp
+
 global km2px, deg2km, px2km, deg2px
 km2px = 1/0.118
 deg2km = 2*np.pi*1737.4/360
@@ -13,7 +15,7 @@ px2km = 0.118
 deg2px = 256
 
 
-def compute_pos_diff(A, B):
+def compute_pos_diff(A, B, CAMx, CAMy):
 
     hp = A
     x1_a, x2_a, x3_a = float(hp.x1), float(hp.x2), float(hp.x3)

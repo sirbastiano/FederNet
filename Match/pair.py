@@ -328,26 +328,6 @@ def find_bounds(triplet):
     return lat_min, lat_max, lon_min, lon_max
 
 
-def inner_join_old(QUERY1, QUERY2, tol1, tol2):
-    DFs, items = [], []
-    for row in QUERY1.itertuples():
-        Angle1_Q1, Angle2_Q1, Angle3_Q1 = row[0], row[1], row[2]
-        d1_Q1, d2_Q1, d3_Q1 = row[3], row[4], row[5]
-
-        SEARCH = QUERY2[((abs(QUERY2.Angle1 - Angle1_Q1) < tol1) & (abs(QUERY2.Angle2-Angle2_Q1) < tol1) & (abs(QUERY2.Angle3-Angle3_Q1) < tol1))
-                        | ((abs(QUERY2.Angle1 - Angle2_Q1) < tol1) & (abs(QUERY2.Angle2 - Angle3_Q1) < tol1) & (abs(QUERY2.Angle3 - Angle1_Q1) < tol1))
-                        | ((abs(QUERY2.Angle1 - Angle3_Q1) < tol1) & (abs(QUERY2.Angle2 - Angle1_Q1) < tol1) & (abs(QUERY2.Angle3 - Angle2_Q1) < tol1))]
-
-        SEARCH = SEARCH[((abs(QUERY2.des1 - d1_Q1) < tol2) & (abs(QUERY2.des2 - d2_Q1) < tol2) & (abs(QUERY2.des3 - d3_Q1) < tol2))
-                        | ((abs(QUERY2.des1 - d2_Q1) < tol2) & (abs(QUERY2.des2 - d3_Q1) < tol2) & (abs(QUERY2.des3 - d1_Q1) < tol2))
-                        | ((abs(QUERY2.des1 - d3_Q1) < tol2) & (abs(QUERY2.des2 - d1_Q1) < tol2) & (abs(QUERY2.des3 - d2_Q1) < tol2))]
-
-        if SEARCH.shape[0] != 0:
-            items.append(row)
-            DFs.append(SEARCH)
-    return DFs, items
-
-
 def compute_centroid(trip):
     x1, x2, x3 = trip[0][0], trip[1][0], trip[2][0]
     y1, y2, y3 = trip[0][1], trip[1][1], trip[2][1]
