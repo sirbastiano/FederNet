@@ -6,6 +6,62 @@ import cv2
 from copy import deepcopy
 import glob
 
+global km2px, deg2km, px2km, deg2px
+km2px = 1/0.118
+deg2km = 2*np.pi*1737.4/360
+px2km = 0.118
+deg2px = 256
+
+
+def compute_pos_diff(A, B):
+
+    hp = A
+    x1_a, x2_a, x3_a = float(hp.x1), float(hp.x2), float(hp.x3)
+    y1_a, y2_a, y3_a = float(hp.y1), float(hp.y2), float(hp.y3)
+    r1_a, r3_a, r3_a = float(hp.r1), float(hp.r2), float(hp.r3)
+
+    A1 = np.hstack([x1_a, y1_a])
+    A2 = np.hstack([x2_a, y2_a])
+    A3 = np.hstack([x3_a, y3_a])
+
+    A = np.vstack([A1, A2, A3])
+
+    hp = B
+    x1_b, x2_b, x3_b = float(hp.lon1), float(hp.lon2), float(hp.lon3)
+    y1_b, y2_b, y3_b = float(hp.lat1), float(hp.lat2), float(hp.lat3)
+    r1_b, r2_b, r3_b = float(hp.r1), float(hp.r2), float(hp.r3)
+
+    x1_b_r, y1_b_r, r1_b_r = absolute2relative([x1_b, y1_b, r1_b], CAMx, CAMy)
+    x2_b_r, y2_b_r, r2_b_r = absolute2relative([x2_b, y2_b, r2_b], CAMx, CAMy)
+    x3_b_r, y3_b_r, r3_b_r = absolute2relative([x3_b, y3_b, r3_b], CAMx, CAMy)
+
+    B1 = np.hstack([x1_b_r, y1_b_r])
+    B2 = np.hstack([x2_b_r, y2_b_r])
+    B3 = np.hstack([x3_b_r, y3_b_r])
+
+    B = np.vstack([B1, B2, B3])
+
+    R, t = icp(A, B)
+
+    xc = t[0]
+    yc = t[1]
+
+    # XC, YC = 850/2, 850/2
+
+    # delta_x = XC-xc
+    # delta_y = YC-yc
+    # # Recompute centroid in LAT-LON:
+
+    # u = 257.52  # ? DEG TO PXS
+    # px2deg = 1/u  # pixel to degree
+    # delta_x *= px2deg
+    # delta_y *= px2deg
+
+    # C = [xc_lon, yc_lat]
+    # pos = [C[0]-delta_x, C[1]-delta_y]
+    pos = [xc, yc]
+    return pos
+
 
 def img_plus_crts(img, craters_det, color="red"):
     # Input: Img:3 chanel, craters_det: np.array
@@ -393,11 +449,6 @@ def swap_df_columns(colname_1, colname_2, df):
     return df
 
 
-global km2px, deg2km
-km2px = 1/0.118
-deg2km = 2*np.pi*1737.4/360
-
-
 def load_all_images(dt):
     # LOAD ALL IMAGES:
     dt = 10
@@ -407,6 +458,23 @@ def load_all_images(dt):
         t = txt.split('_')[1]  # numero
         dict[t] = txt
     return dict
+
+
+def absolute2relative(crt, CAMx, CAMy, canvas=850):
+    # Input: crt: lon, lat, r(km); Camera-x and Camera-y | Output: x,y, r(pix)
+    # crater center:
+    xc, yc, rc = crt[0], crt[1], crt[2]  # This is in the absolute frame
+    # f: Absolute --> f: Relative
+    xc = xc - CAMx
+    yc = yc - CAMy
+    # f: relative --> f: OPENCV
+    xc *= deg2px  # Now is in pixel not in lon deg
+    yc *= deg2px  # Now is in pixel not in lat deg
+
+    xc = canvas/2 + xc
+    yc = canvas/2 - yc
+    rc = crt[2] * km2px
+    return [xc, yc, rc]
 
 
 def main():
