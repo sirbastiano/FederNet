@@ -223,7 +223,7 @@ def match_prep(b, scores, img_dim):
 class InferenceConfig(ShapesConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    DETECTION_MIN_CONFIDENCE = 0.90
+    DETECTION_MIN_CONFIDENCE = 0.85
 
 
 inference_config = InferenceConfig()
