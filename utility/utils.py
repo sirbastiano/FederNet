@@ -462,8 +462,8 @@ def load_all_images(dt):
     return dict
 
 
-def absolute2relative(crt, CAMx, CAMy, canvas=850):
-    # Input: crt: lon, lat, r(km); Camera-x and Camera-y | Output: x,y, r(pix)
+def absolute2relative(crt, CAMx, CAMy, canvas=[849, 849], km2px=1/0.188):
+    # Input: crt: lon, lat, r(km); Canvas: size in px of image, CAMx, CAMy:center pose | Output: x,y, r(pix)
     # crater center:
     xc, yc, rc = crt[0], crt[1], crt[2]  # This is in the absolute frame
     # f: Absolute --> f: Relative
@@ -473,8 +473,8 @@ def absolute2relative(crt, CAMx, CAMy, canvas=850):
     xc *= deg2px  # Now is in pixel not in lon deg
     yc *= deg2px  # Now is in pixel not in lat deg
 
-    xc = canvas/2 + xc
-    yc = canvas/2 - yc
+    xc = float(canvas[0]/2) + xc
+    yc = float(canvas[1]/2) - yc
     rc = crt[2] * km2px
     return [xc, yc, rc]
 
