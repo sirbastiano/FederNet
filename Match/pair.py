@@ -486,7 +486,467 @@ def compute_pos(A, B):
     pos = [C[0]-delta_x, C[1]-delta_y]
     return pos
 
+def check_sol(I,J, tol, mode, S, iss):
+    if mode == 'natural':
+        row1 = iss[I]
+        tmp = S[I].iloc[J]
+    elif mode == 'inverse':
+        row1 = S[I].iloc[J]
+        tmp = iss[I]
+    
+    IDS = [0,1,2]
 
+    left_id = np.argmin([row1.lon1, row1.lon2, row1.lon3])
+    right_id = np.argmax([row1.lon1, row1.lon2, row1.lon3])
+    for epsi in IDS:
+        if (epsi != left_id) & (epsi != right_id):
+            center_id = epsi
+
+    if left_id==0:
+        left = [row1.lon1, row1.lat1, row1.r1]
+    elif left_id==1:
+        left = [row1.lon2, row1.lat2, row1.r2]
+    elif left_id==2:
+        left = [row1.lon3, row1.lat3, row1.r3]    
+
+    if right_id==0:
+        right = [row1.lon1, row1.lat1, row1.r1]
+    elif right_id==1:
+        right = [row1.lon2, row1.lat2, row1.r2]
+    elif right_id==2:
+        right = [row1.lon3, row1.lat3, row1.r3] 
+    
+    if center_id==0:
+        center = [row1.lon1, row1.lat1, row1.r1]
+    elif center_id==1:
+        center = [row1.lon2, row1.lat2, row1.r2]
+    elif center_id==2:
+        center = [row1.lon3, row1.lat3, row1.r3] 
+
+
+    x1,x2,x3 = tmp.x1, tmp.x2, tmp.x3
+    y1,y2,y3 = tmp.y1, tmp.y2, tmp.y3
+    r1,r2,r3 = tmp.r1, tmp.r2,  tmp.r3
+
+    Left_id = np.argmin([x1,x2,x3])
+    Right_id = np.argmax([x1,x2,x3])
+    for epsi in IDS:
+        if (epsi != Left_id) & (epsi != Right_id):
+            Center_id = epsi
+
+    if Left_id==0:
+        Left = [x1, y1, r1]
+    elif Left_id==1:
+        Left = [x2,y2,r2]
+    elif Left_id==2:
+        Left = [x3,y3,r3]    
+
+    if Right_id==0:
+        Right = [x1,y1,r1]
+    elif Right_id==1:
+        Right = [x2,y2,r2]
+    elif Right_id==2:
+        Right = [x3,y3,r3]
+
+    if Center_id==0:
+        Center = [x1, y1, r1]
+    elif Center_id==1:
+        Center = [x2,y2,r2]
+    elif Center_id==2:
+        Center = [x3,y3,r3] 
+
+    a=left[2]/Left[2]
+    b=right[2]/Right[2]
+    c=center[2]/Center[2]
+
+    if (abs(a-b) < tol) & (abs(a-c) < tol) & (abs(b-c) < tol):
+        return True
+    else: return False
+
+
+def plot_sol(I,J, mode, S, iss, lon_bounds, lat_bounds, filename):
+    if mode == 'natural':
+        row1 = iss[I]
+        tmp = S[I].iloc[J]
+    elif mode == 'inverse':
+        tmp = iss[I]
+        row1 = S[I].iloc[J]
+    
+    CAMx, CAMy = ((lon_bounds[0] + lon_bounds[1]) / 2,
+                  (lat_bounds[0] + lat_bounds[1]) / 2)
+    
+    
+    crt1 = np.array([ row1.lon1, row1.lat1, row1.r1  ])
+    crt2 = np.array([ row1.lon2, row1.lat2, row1.r2  ])
+    crt3 = np.array([ row1.lon3, row1.lat3, row1.r3  ])
+    triplet = [crt1, crt2, crt3]
+    
+    
+    # img=cv2.imread(filename)
+    img=np.zeros((850,850,3))
+    deg2px = 256
+    for crt in triplet:
+        # crater center:
+        xc, yc, rc = crt[0], crt[1], crt[2]  # This is in the absolute frame
+        # f: Absolute --> f: Relative
+        xc = xc - CAMx
+        yc = yc - CAMy
+        # f: relative --> f: OPENCV
+        xc *= deg2px  # Now is in pixel not in lon deg
+        yc *= deg2px  # Now is in pixel not in lat deg
+        # rc *= u  # Now is in pixel not in lat deg
+        
+    
+        xc = 850/2 + xc
+        yc = 850/2 - yc
+        center_coordinates = (int(xc), int(yc))
+        # ? 1 km = 8.4746 px in our DEM := Merge LOLA - KAGUYA
+        radius = int(crt[2] * km2px)
+        color = (255, 255, 255)
+        thickness = 3
+        img_prova = cv2.circle(img, center_coordinates, radius, color, thickness)
+    
+    plt.figure(dpi=130)
+    plt.subplot(121)
+    plt.imshow(img_prova)
+    plt.xticks([0,848/2,848],[f'{lon_bounds[0]:.2f}°',f'{(lon_bounds[1]+lon_bounds[0])/2:.2f}°',f'{lon_bounds[1]:.2f}°'])
+    plt.yticks([0,848/2,848],[f'{lat_bounds[0]:.2f}°',f'{(lat_bounds[1]+lat_bounds[0])/2:.2f}°',f'{lat_bounds[1]:.2f}°'])
+    plt.xlabel('LON')
+    plt.ylabel('LAT')
+
+    # plt.xlabel('CAT')
+    plt.show()
+    
+    
+    cp1 = cv2.imread(filename)
+    x1,x2,x3 = tmp.x1, tmp.x2, tmp.x3
+    y1,y2,y3 = tmp.y1, tmp.y2, tmp.y3
+    r1,r2,r3 = tmp.r1, tmp.r2,  tmp.r3
+    cr1 = np.array([x1,y1,r1]) 
+    cr2 = np.array([x2,y2,r2]) 
+    cr3 = np.array([x3,y3,r3])
+    crts = np.vstack([cr1,cr2,cr3])
+    plt.subplot(122)
+    # plt.xlabel('DET')
+    plt.xticks([0,848/2,848],[f'{lon_bounds[0]:.2f}°',f'{(lon_bounds[1]+lon_bounds[0])/2:.2f}°',f'{lon_bounds[1]:.2f}°'])
+    plt.yticks([0,848/2,848],[f'{lat_bounds[0]:.2f}°',f'{(lat_bounds[1]+lat_bounds[0])/2:.2f}°',f'{lat_bounds[1]:.2f}°'])
+    plt.xlabel('LON')
+    plt.ylabel('LAT')
+
+    IMG1 =  img_plus_crts(cp1, crts, color="red")
+    plt.imshow(IMG1)
+    plt.show()
+
+def find_slope(P1:np.array,P2:np.array) -> float:
+    slope = (P2[1]-P1[1])/(P2[0]-P1[0])
+    return slope
+
+
+def check_sol2(I,J, tol, mode, S, iss, CAMx, CAMy):    #TODO aggiungere lat e lon bounds 
+    if mode == 'natural':
+        B = iss[I]
+        A = S[I].iloc[J]
+    elif mode == 'inverse':
+        B = S[I].iloc[J]
+        A = iss[I]
+
+    hp = A
+    x1_a, x2_a, x3_a = float(hp.x1), float(hp.x2), float(hp.x3)
+    y1_a, y2_a, y3_a = float(hp.y1), float(hp.y2), float(hp.y3)
+    r1_a, r2_a, r3_a = float(hp.r1), float(hp.r2), float(hp.r3)
+
+    A1 = np.hstack([x1_a, y1_a, r1_a])
+    A2 = np.hstack([x2_a, y2_a, r2_a])
+    A3 = np.hstack([x3_a, y3_a, r3_a])
+
+    A = np.vstack([A1, A2, A3])
+
+    hp = B
+    x1_b, x2_b, x3_b = float(hp.lon1), float(hp.lon2), float(hp.lon3)
+    y1_b, y2_b, y3_b = float(hp.lat1), float(hp.lat2), float(hp.lat3)
+    r1_b, r2_b, r3_b = float(hp.r1), float(hp.r2), float(hp.r3)
+
+    x1_b_r, y1_b_r, r1_b_r = absolute2relative([x1_b, y1_b, r1_b], CAMx, CAMy)
+    x2_b_r, y2_b_r, r2_b_r = absolute2relative([x2_b, y2_b, r2_b], CAMx, CAMy)
+    x3_b_r, y3_b_r, r3_b_r = absolute2relative([x3_b, y3_b, r3_b], CAMx, CAMy)
+
+    B1 = np.hstack([x1_b_r, y1_b_r, r1_b_r])
+    B2 = np.hstack([x2_b_r, y2_b_r, r2_b_r])
+    B3 = np.hstack([x3_b_r, y3_b_r, r3_b_r])
+
+    B = np.vstack([B1, B2, B3])
+
+    # identifiy points A:
+    x1,x2,x3 = A[0][0], A[1][0], A[2][0]
+    y1,y2,y3 = A[0][1], A[1][1], A[2][1]
+    r1,r2,r3 = A[0][2], A[1][2], A[2][2]
+    # Pick the ids:
+    Left_id = np.argmin([x1,x2,x3])
+    Right_id = np.argmax([x1,x2,x3])
+    for id in [0,1,2]: 
+        if (id != Left_id) & (id != Right_id): Center_id = id 
+    # Reassign relate to ids:
+    if Left_id==0:
+        Left = [x1, y1, r1]
+    elif Left_id==1:
+        Left = [x2,y2,r2]
+    elif Left_id==2:
+        Left = [x3,y3,r3]    
+
+    if Right_id==0:
+        Right = [x1,y1,r1]
+    elif Right_id==1:
+        Right = [x2,y2,r2]
+    elif Right_id==2:
+        Right = [x3,y3,r3]
+
+    if Center_id==0:
+        Center = [x1,y1,r1]
+    elif Center_id==1:
+        Center = [x2,y2,r2]
+    elif Center_id==2:
+        Center = [x3,y3,r3]
+    # Calculate Orientation:
+    alfa1 = find_slope(Left, Center)
+    alfa2 = find_slope(Center, Right)
+    alfa3 = find_slope(Left, Right)
+    # print('\n')
+    # print(alfa1,alfa2, alfa3)
+    # identifiy points B:
+    x1,x2,x3 = B[0][0], B[1][0], B[2][0]
+    y1,y2,y3 = B[0][1], B[1][1], B[2][1]
+    r1,r2,r3 = B[0][2], B[1][2], B[2][2]
+    # Pick the ids:
+    Left_id = np.argmin([x1,x2,x3])
+    Right_id = np.argmax([x1,x2,x3])
+    for id in [0,1,2]: 
+        if (id != Left_id) & (id != Right_id): Center_id = id 
+    # Reassign relate to ids:
+    if Left_id==0:
+        Left = [x1, y1, r1]
+    elif Left_id==1:
+        Left = [x2,y2,r2]
+    elif Left_id==2:
+        Left = [x3,y3,r3]    
+
+    if Right_id==0:
+        Right = [x1,y1,r1]
+    elif Right_id==1:
+        Right = [x2,y2,r2]
+    elif Right_id==2:
+        Right = [x3,y3,r3]
+
+    if Center_id==0:
+        Center = [x1,y1,r1]
+    elif Center_id==1:
+        Center = [x2,y2,r2]
+    elif Center_id==2:
+        Center = [x3,y3,r3]
+    # Calculate Orientation:
+    beta1 = find_slope(Left, Center)
+    beta2 = find_slope(Center, Right)
+    beta3 = find_slope(Left, Right)
+    
+    if (abs(alfa1-beta1) < tol) & (abs(alfa2-beta2) < tol) & (abs(alfa3-beta3) < tol): return True
+    else: return False
+
+    
+def filter_quartile(Xs):
+    X = pd.DataFrame(Xs)
+    Q1 = X.quantile(0.40)
+    Q3 = X.quantile(0.60)
+    IQR = Q3 - Q1
+    X = X[np.logical_not((X < (Q1 - 1.5 * IQR)) | (X > (Q3 + 1.5 * IQR)))]
+    X = X.dropna()
+    return np.array(X)
+
+
+def find_ABBa(i, j, mode,S,iss, CAMx, CAMy):
+        if mode == 'natural':
+            tc = iss[i]
+            td = S[i].iloc[j]
+        elif mode == 'inverse':
+            td = iss[i]
+            tc = S[i].iloc[j]
+
+        hp = td
+        x1_a, x2_a, x3_a = float(hp.x1), float(hp.x2), float(hp.x3)
+        y1_a, y2_a, y3_a = float(hp.y1), float(hp.y2), float(hp.y3)
+        r1_a, r3_a, r3_a = float(hp.r1), float(hp.r2), float(hp.r3)
+
+        A1 = np.hstack([x1_a, y1_a])
+        A2 = np.hstack([x2_a, y2_a])
+        A3 = np.hstack([x3_a, y3_a])
+
+        A = np.vstack([A1, A2, A3])
+
+        hp = tc
+        x1_b, x2_b, x3_b = float(hp.lon1), float(hp.lon2), float(hp.lon3)
+        y1_b, y2_b, y3_b = float(hp.lat1), float(hp.lat2), float(hp.lat3)
+        r1_b, r2_b, r3_b = float(hp.r1), float(hp.r2), float(hp.r3)
+        # Attenzione qua, passo dal riferimento assoluto a quello relativo.... sarà corretto così?
+        x1_b_r, y1_b_r, r1_b_r = absolute2relative([x1_b, y1_b, r1_b], CAMx, CAMy)
+        x2_b_r, y2_b_r, r2_b_r = absolute2relative([x2_b, y2_b, r2_b], CAMx, CAMy)
+        x3_b_r, y3_b_r, r3_b_r = absolute2relative([x3_b, y3_b, r3_b], CAMx, CAMy)
+
+        B1 = np.hstack([x1_b_r, y1_b_r])
+        B2 = np.hstack([x2_b_r, y2_b_r])
+        B3 = np.hstack([x3_b_r, y3_b_r])
+
+        B1_a = np.hstack([x1_b, y1_b])
+        B2_a = np.hstack([x2_b, y2_b])
+        B3_a = np.hstack([x3_b, y3_b])
+
+        B = np.vstack([B1, B2, B3])
+        B_a = np.vstack([B1_a, B2_a, B3_a])
+
+        return A, B, B_a
+
+
+def find_pairs(A,B):
+
+    def find_left(A):
+        left_id = np.argmin([A[0,0],A[1,0],A[2,0]])
+        # return A[left_id]
+        return left_id
+
+    def find_right(A):
+        right_id = np.argmax([A[0,0],A[1,0],A[2,0]])
+        # return A[right_id]
+        return right_id
+
+    def find_center(A):
+        right_id = np.argmax([A[0,0],A[1,0],A[2,0]])
+        left_id = np.argmin([A[0,0],A[1,0],A[2,0]])
+        for j in range(A.shape[0]):
+            if (j!= right_id) & (j!= left_id):
+                center_id = j
+        # return A[center_id] 
+        return center_id 
+    
+    
+    l1,r1,c1 = find_left(A), find_right(A), find_center(A)
+    l2,r2,c2 = find_left(B), find_right(B), find_center(B)
+    
+    idx1 = np.hstack([l1,l2])
+    idx2 = np.hstack([c1,c2])
+    idx3 = np.hstack([r1,r2])
+
+    IDX = np.vstack([idx1,idx2,idx3])
+    return IDX
+
+def H_estimation(Is, Js, mode, S, iss, CAMx,CAMy ,VERBOSE=False):
+    PX2DEGs = []
+    for s in range(len(Is)):
+        i, j = Is[s], Js[s]
+        A,B,B_a = find_ABBa(i,j,mode, S, iss, CAMx, CAMy)
+        comb=find_pairs(A,B)
+        if VERBOSE:
+            print(f'Pair result is:\n{comb}')
+        
+        ##########################################################################
+        # Primo Cratere:                                                        1
+        CR = 0
+        i, j = int(comb[CR,0]), int(comb[CR,1])
+        cr1_a = A[i]   # Relativo
+        cr1_b = B_a[j] # Assoluto
+
+        # Secondo Cratere:
+        CR = 1
+        y, k = int(comb[CR,0]), int(comb[CR,1])
+        cr2_a = A[y]   # Relativo
+        cr2_b = B_a[k] # Assoluto
+
+        # DISTANCES:
+        d_pix = eu_dist(cr1_a, cr2_a) # Distance crater1-crater2 in pixel
+        d_deg = eu_dist(cr1_b, cr2_b) # Distance crater1-crater2 in degrees
+        if VERBOSE:
+            print(f'Distance in pix: {d_pix:.2f}\nDistance in deg: {d_deg:.2f}')
+        px2deg = d_deg/d_pix
+        PX2DEGs.append(px2deg)
+        #########################################################################
+        # Primo Cratere:                                                        2
+        CR = 0
+        i, j = int(comb[CR,0]), int(comb[CR,1])
+        cr1_a = A[i]   # Relativo
+        cr1_b = B_a[j] # Assoluto
+
+        # Secondo Cratere:
+        CR = 2
+        y, k = int(comb[CR,0]), int(comb[CR,1])
+        cr2_a = A[y]   # Relativo
+        cr2_b = B_a[k] # Assoluto
+
+        # DISTANCES:
+        d_pix = eu_dist(cr1_a, cr2_a) # Distance crater1-crater2 in pixel
+        d_deg = eu_dist(cr1_b, cr2_b) # Distance crater1-crater2 in degrees
+        if VERBOSE:
+            print(f'Distance in pix: {d_pix:.2f}\nDistance in deg: {d_deg:.2f}')
+        px2deg = d_deg/d_pix
+        PX2DEGs.append(px2deg)
+        #########################################################################
+        # Primo Cratere:                                                        3
+        CR = 1
+        i, j = int(comb[CR,0]), int(comb[CR,1])
+        cr1_a = A[i]   # Relativo
+        cr1_b = B_a[j] # Assoluto
+
+        # Secondo Cratere:
+        CR = 2
+        y, k = int(comb[CR,0]), int(comb[CR,1])
+        cr2_a = A[y]   # Relativo
+        cr2_b = B_a[k] # Assoluto
+
+        # DISTANCES:
+        d_pix = eu_dist(cr1_a, cr2_a) # Distance crater1-crater2 in pixel
+        d_deg = eu_dist(cr1_b, cr2_b) # Distance crater1-crater2 in degrees
+        if VERBOSE:
+            print(f'Distance in pix: {d_pix:.2f}\nDistance in deg: {d_deg:.2f}')
+        px2deg = d_deg/d_pix
+        PX2DEGs.append(px2deg)
+        #######################################################################
+    
+    px2deg = np.mean(filter_quartile(PX2DEGs))
+    ###########################################################################
+    px2km_n = px2deg*deg2km         # Having this px2km_n, Estimate the height!!!!
+    if VERBOSE: 
+        print(f'The resulting px2km: {px2km_n:.3f}')
+    # d = 2 H tg(FOV/2) -> H = d /[2 tg(FOV/2)]
+    d = 849*px2km_n
+    FOV = np.deg2rad(90)
+    H = d / (2*np.tan(FOV/2))
+    if VERBOSE:
+        print(f'Height corresponding is: {H:.2f}')
+    return H, px2deg
+
+def LL_estimation(A, B, B_a, px2deg, VERBOSE=False):
+
+    comb=find_pairs(A,B)
+    pp = []
+    for CR in range(3):
+        i = int(comb[CR,0])
+        j = int(comb[CR,1])
+        C = np.array([849/2, 849/2]) # Center of image
+        cr1_a = A[i]
+        cr1_b = B_a[j]
+        Delta = C - cr1_a
+        Delta_deg = Delta*px2deg
+        Pos = [cr1_b[0]+Delta_deg[0], cr1_b[1]-Delta_deg[1]]
+        Pos=np.array(Pos)
+        if VERBOSE:
+            print(f'Position Estimated is:      LON:{Pos[0]:.3f}        LAT:{Pos[1]:.3f}')
+        pp.append(Pos)
+    
+    lon, lat = [], []
+    for p in pp:
+        lon.append(p[0])
+        lat.append(p[1])
+    
+    LON = np.mean(lon)
+    LAT = np.mean(lat)
+    return LON, LAT
+
+    
 def main():
     pass
 
