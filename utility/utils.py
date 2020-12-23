@@ -480,6 +480,17 @@ def absolute2relative(crt, CAMx, CAMy, canvas=[849, 849], km2px=1/0.188):
     return [xc, yc, rc]
 
 def ecef_to_enu(x, y, z, lat0, lon0, h0):
+    """
+    This script provides coordinate transformations from Geodetic -> ECEF, ECEF -> ENU
+    and Geodetic -> ENU (the composition of the two previous functions). Running the script
+    by itself runs tests.
+    credits to https://gist.github.com/sbarratt/a72bede917b482826192bf34f9ff5d0b
+    """
+    a = 1737400 # Mean radius
+    b = 1738100 # Equatorial radius
+    f = (a - b) / a
+    e_sq = f * (2-f)
+
     lamb = math.radians(lat0)
     phi = math.radians(lon0)
     s = math.sin(lamb)
@@ -503,7 +514,6 @@ def ecef_to_enu(x, y, z, lat0, lon0, h0):
     zUp = cos_lambda * cos_phi * xd + cos_lambda * sin_phi * yd + sin_lambda * zd
 
     return xEast, yNorth, zUp
-
 
 
 def main():
