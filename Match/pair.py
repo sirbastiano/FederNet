@@ -753,8 +753,8 @@ def check_sol2(I,J, tol, mode, S, iss, CAMx, CAMy):    #TODO aggiungere lat e lo
     
 def filter_quartile(Xs):
     X = pd.DataFrame(Xs)
-    Q1 = X.quantile(0.48)
-    Q3 = X.quantile(0.52)
+    Q1 = X.quantile(0.30)
+    Q3 = X.quantile(0.70)
     IQR = Q3 - Q1
     X = X[np.logical_not((X < (Q1 - 1.5 * IQR)) | (X > (Q3 + 1.5 * IQR)))]
     X = X.dropna()

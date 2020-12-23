@@ -5,6 +5,7 @@ import pandas as pd
 import cv2
 from copy import deepcopy
 import glob
+import math
 
 from Match.icp import icp
 
@@ -477,6 +478,32 @@ def absolute2relative(crt, CAMx, CAMy, canvas=[849, 849], km2px=1/0.188):
     yc = float(canvas[1]/2) - yc
     rc = crt[2] * km2px
     return [xc, yc, rc]
+
+def ecef_to_enu(x, y, z, lat0, lon0, h0):
+    lamb = math.radians(lat0)
+    phi = math.radians(lon0)
+    s = math.sin(lamb)
+    N = a / math.sqrt(1 - e_sq * s * s)
+
+    sin_lambda = math.sin(lamb)
+    cos_lambda = math.cos(lamb)
+    sin_phi = math.sin(phi)
+    cos_phi = math.cos(phi)
+
+    x0 = (h0 + N) * cos_lambda * cos_phi
+    y0 = (h0 + N) * cos_lambda * sin_phi
+    z0 = (h0 + (1 - e_sq) * N) * sin_lambda
+
+    xd = x - x0
+    yd = y - y0
+    zd = z - z0
+
+    xEast = -sin_phi * xd + cos_phi * yd
+    yNorth = -cos_phi * sin_lambda * xd - sin_lambda * sin_phi * yd + cos_lambda * zd
+    zUp = cos_lambda * cos_phi * xd + cos_lambda * sin_phi * yd + sin_lambda * zd
+
+    return xEast, yNorth, zUp
+
 
 
 def main():
