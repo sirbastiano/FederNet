@@ -606,7 +606,7 @@ def plot_sol(I,J, mode, S, iss, lon_bounds, lat_bounds, filename):
         thickness = 3
         img_prova = cv2.circle(img, center_coordinates, radius, color, thickness)
     
-    plt.figure(dpi=130)
+    plt.figure(dpi=200, figsize=(10,5))
     plt.subplot(121)
     plt.imshow(img_prova)
     plt.xticks([0,848/2,848],[f'{lon_bounds[0]:.2f}°',f'{(lon_bounds[1]+lon_bounds[0])/2:.2f}°',f'{lon_bounds[1]:.2f}°'])
