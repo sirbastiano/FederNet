@@ -57,7 +57,7 @@ for i in range(len(df)):
 real_X, real_Y, real_Z = np.array(real_X),np.array(real_Y),np.array(real_Z)
 #dpf = pd.read_csv(r"C:\Users\formi\OneDrive\Desktop\KalmanPython2\orbite\Orbit1_nadir\Orbit1_nadir\Position_Fixed.csv") 
 #real_X1, real_Y1, real_Z1  = dpf['x (km)'], dpf['y (km)'],dpf['z (km)']
-#alt_,lat_,long_=cartesian2spherical(real_X1[0]*(-1),real_Y1[0]*(-1),real_Z1[0]*(-1))
+
 
 #database crateri
 DB = pd.read_csv(r"C:\Users\formi\OneDrive\Desktop\KalmanPython1\orbite\lunar_crater_database_robbins_2018.csv") 
