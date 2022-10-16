@@ -216,9 +216,9 @@ for i in range(10):
                 longitudec = crater_Longitudes[i]
 
                 x, y, z = spherical2cartesian(altitude, latitudec, longitudec)
-                x_c.append(x*(0.001))
-                y_c.append(y*(0.001))
-                z_c.append(z*(0.001))
+                x_c.append(x)
+                y_c.append(y)
+                z_c.append(z)
                 xyz_i=np.array((x,y,z))
                 coo3 = np.vstack((coo3, xyz_i))
 
