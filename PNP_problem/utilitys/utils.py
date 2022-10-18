@@ -41,7 +41,7 @@ def spherical2cartesian(h, Lat, Lon):
     R_moon = 1737.4
     x, y, z = spherical_to_cartesian(
         h + R_moon, np.deg2rad(Lat), np.deg2rad(Lon))
-    return np.array(x), np.array(y), np.array(z)
+    return -np.array(x), -np.array(y), -np.array(z)
 
 
 def CatalogSearch(H, lat_bounds: np.array, lon_bounds: np.array, CAT_NAME):

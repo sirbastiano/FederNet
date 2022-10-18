@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 from numpy.linalg import inv, pinv
 import math
 from poliastro.bodies import Moon 
@@ -15,25 +15,25 @@ import matplotlib.pyplot as plt
 FOV=61.4 #° WAC
 
 # Funzione per passare da LCLF a ENU
-def LCLF2ENU (x, y, z, lat, long):
-    phi=math.radians(lat)
-    lam=math.radians(long)
+def LCLF2ENU(x, y, z, Lat, Long):
+    phi=math.radians(Lat)
+    lam=math.radians(Long)
     rot_Matrix=np.array([[-np.sin(lam), np.cos(lam), 0], [-np.cos(lam)*np.sin(phi), -np.sin(lam)*np.sin(phi), np.cos(phi)],[np.cos(lam)*np.cos(phi), np.sin(lam)*np.cos(phi), np.sin(phi)]])
     LCLF=np.array([x,y,z])
     E, N, U = np.dot(rot_Matrix,LCLF)
     return np.array(E), np.array(N), np.array(U)
 
 # Funzione per passare da ENU a LCLF
-def ENU2LCLF (e, n, u, lat, long):
-    phi=math.radians(lat)
-    lam=math.radians(long)
+def ENU2LCLF(e, n, u, Lat, Long):
+    phi=math.radians(Lat)
+    lam=math.radians(Long)
     rot_Matrix=np.array([[-np.sin(lam), -np.cos(lam)*np.sin(phi), np.cos(lam)*np.cos(phi)], [np.cos(lam), -np.sin(lam)*np.sin(phi), np.sin(lam)*np.cos(phi)],[0, np.cos(phi), np.sin(phi)]])
     ENU=np.array([e,n,u])
     x, y, z = np.dot(rot_Matrix,ENU)
     return np.array(x), np.array(y), np.array(z)
 
 def SW_nadir(H):
-    SW1=2*H*np.tan(math.radians(0.5*FOV))
+    SW1=2*H*np.tan(math.radians(0.5*FOV)) 
     SW=SW1*1000 #in metri
     return SW
 
